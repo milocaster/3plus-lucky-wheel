@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3plus Fortune - Full Sarcasm V14</title>
+    <title>3plus Fortune - Stable Shake V15</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #ed1c24; --gold: #fbc531; --bg: #050505; }
@@ -21,7 +21,7 @@
         @keyframes blink { 50% { opacity: 0.3; } }
 
         .left-controls { position: absolute; top: 15px; left: 15px; display: flex; flex-direction: column; gap: 12px; z-index: 1000; }
-        .circle-btn { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--gold); background: rgba(0,0,0,0.8); color: var(--gold); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .circle-btn { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--gold); background: rgba(0,0,0,0.8); color: var(--gold); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; outline: none; }
 
         .settings-panel { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.85); padding: 12px; border-radius: 15px; border: 1px solid #444; z-index: 1000; display: flex; flex-direction: column; gap: 8px; font-size: 12px; }
         .vol-row { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
@@ -39,8 +39,8 @@
         .pwr-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #4cd137, #fbc531, #ed1c24); }
 
         .spin-btn { width: 75vw; max-width: 320px; padding: 15px 0; font-size: 26px; font-weight: 700; background: linear-gradient(180deg, #ff4d4d 0%, #ed1c24 100%); color: white; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 8px 0 #991217; outline: none; -webkit-tap-highlight-color: transparent; }
-        .spin-btn:active { transform: translateY(4px); box-shadow: 0 4px 0 #991217; }
-        .spin-btn:disabled { filter: grayscale(1); opacity: 0.5; }
+        .spin-btn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 4px 0 #991217; }
+        .spin-btn:disabled { filter: grayscale(1); opacity: 0.5; cursor: not-allowed; }
 
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 5000; align-items: center; justify-content: center; backdrop-filter: blur(10px); padding: 20px; }
         .modal-content { background: #111; border: 3px solid var(--gold); padding: 30px; border-radius: 30px; text-align: center; width: 100%; max-width: 380px; }
@@ -129,7 +129,7 @@
 
     const sarcasm = {
         miss: ["เกลือเน้นๆ ว่ะน้อง!", "ยินดีด้วย คุณได้ความว่างเปล่า", "ดวงกุดจัด ไปทำบุญด่วน!", "โถ่... นึกว่าจะแน่!", "ของดี..เฮียเก็บไว้ใช้เองเถอะ!!"],
-        pts: ["จัดไปวัยรุ่น เบี้ยยังชีพเป๋าแล้ว!", "รวยๆ เฮงๆ แต้มมาว่ะ!", "นิดๆ หน่อยๆ พอเป็นพิธี", "แต้มบุญทำงานแล้วสินะ"],
+        pts: ["จัดไปวัยรุ่น เบี้ยยังชีพเข้าเป๋าแล้ว!", "รวยๆ เฮงๆ แต้มมาว่ะ!", "นิดๆ หน่อยๆ พอเป็นพิธี", "แต้มบุญทำงานแล้วสินะ"],
         tkt: ["ได้ตั๋ว 3Plus สงสัยดวงจะมา", "ของแรร์นะเนี่ย เก็บไว้แลกของนะ", "ว้าว... ได้ตั๋วซะด้วย!"]
     };
 
@@ -157,8 +157,14 @@
     function handleShake(e) {
         if (isBusy || pts < SPIN_COST) return;
         let acc = e.accelerationIncludingGravity;
-        if ((Math.abs(acc.x) + Math.abs(acc.y) + Math.abs(acc.z)) > 25 && (Date.now() - lastShake > 2000)) {
-            lastShake = Date.now(); executeSpin(75 + Math.random()*25); if (navigator.vibrate) navigator.vibrate(100);
+        if (!acc) return;
+        
+        // --- [STABLE SHAKE LOGIC] ---
+        let totalAcc = Math.abs(acc.x) + Math.abs(acc.y) + Math.abs(acc.z);
+        if (totalAcc > 35 && (Date.now() - lastShake > 3000)) { // ปรับ Threshold เป็น 35 และ Cooldown เป็น 3วิ
+            lastShake = Date.now();
+            if (navigator.vibrate) navigator.vibrate(50); // สั่นเตือนสั้นๆ ว่ารับเขย่าแล้ว
+            executeSpin(75 + Math.random()*25); 
         }
     }
 
