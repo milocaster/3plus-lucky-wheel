@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3plus Fortune - Stable Shake V15</title>
+    <title>3plus Fortune - Stable Shake V16</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #ed1c24; --gold: #fbc531; --bg: #050505; }
@@ -155,15 +155,25 @@
 
     let lastShake = 0;
     function handleShake(e) {
+        // --- [CRITICAL iOS FIX] ---
+        // 1. ตรวจสอบสถานะการหมุน ป้องกันการสั่งงานซ้ำรัวๆ (Anti-Spam)
         if (isBusy || pts < SPIN_COST) return;
+        
         let acc = e.accelerationIncludingGravity;
         if (!acc) return;
         
-        // --- [STABLE SHAKE LOGIC] ---
         let totalAcc = Math.abs(acc.x) + Math.abs(acc.y) + Math.abs(acc.z);
-        if (totalAcc > 35 && (Date.now() - lastShake > 3000)) { // ปรับ Threshold เป็น 35 และ Cooldown เป็น 3วิ
+        
+        // 2. ปรับเพิ่ม Threshold เป็น 50 (iOS Sensors ไวมาก ต้องเขย่าแรงกว่า Android)
+        // 3. ปรับเพิ่ม Cooldown เป็น 3 วิ
+        if (totalAcc > 50 && (Date.now() - lastShake > 3000)) { 
             lastShake = Date.now();
-            if (navigator.vibrate) navigator.vibrate(50); // สั่นเตือนสั้นๆ ว่ารับเขย่าแล้ว
+            
+            // 4. เสียง Feedback พิเศษชดเชย iOS ไม่สั่นตอนรับงาน
+            playTick(1200); // Beep เสียงสูง
+            if (navigator.vibrate) navigator.vibrate(50); // ลองสั่น (สำหรับ Android ที่มาเล่นตัวนี้)
+            
+            // สั่งสุ่มทันที
             executeSpin(75 + Math.random()*25); 
         }
     }
@@ -185,7 +195,10 @@
     function releaseCharge() { clearInterval(pwrInterval); pwrInterval = null; document.getElementById('pwrCont').style.display = 'none'; executeSpin(power); }
 
     function executeSpin(impact) {
+        // --- [CORE LOGIC FIX] ---
+        // ตรวจสอบซ้ำอีกครั้งว่ากำลังทำงานอยู่หรือไม่ ป้องกันการ Spam
         if(isBusy || pts < SPIN_COST) return;
+        
         isBusy = true; pts -= SPIN_COST; document.getElementById('pts').innerText = pts; spinBtn.disabled = true;
         const totalW = prizes.reduce((s, p) => s + p.weight, 0);
         let r = Math.random() * totalW, winIdx = 0;
@@ -259,9 +272,11 @@
     function closeWinModal() { document.getElementById('winModal').style.display = 'none'; spinBtn.disabled = false; flashMode = "normal"; updateBtnState(); }
     function updateBtnState() { if (pts < SPIN_COST) { spinBtn.innerText = "NOT ENOUGH"; spinBtn.disabled = true; } else { spinBtn.innerText = "SPIN!"; spinBtn.disabled = false; } }
     function updateVol() { bgmGain.gain.value = document.getElementById('bgmVol').value; sfxGain.gain.value = document.getElementById('sfxVol').value; }
-    function playTick() {
+    
+    // --- [AUDIO FIX] ---
+    function playTick(freq = 900) { // เพิ่ม parameter ความถี่เสียง
         const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-        osc.type = 'sine'; osc.frequency.setValueAtTime(900, audioCtx.currentTime);
+        osc.type = 'sine'; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
         gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
         osc.connect(gain); gain.connect(sfxGain); osc.start(); osc.stop(audioCtx.currentTime + 0.05);
     }
