@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3plus Fortune - Absolute Sync V19</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #ed1c24; --gold: #fbc531; --bg: #050505; }
+        body { background: var(--bg); color: white; font-family: 'Kanit', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; user-select: none; }
+
+        /* Start Overlay */
+        #startOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; text-align: center; }
+        #startOverlay h1 { font-size: 60px; color: var(--gold); text-shadow: 0 0 30px var(--gold); margin: 0; }
+        #startOverlay p { font-size: 24px; color: #fff; margin-top: 20px; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* HUD */
+        .pts-text { font-size: 48px; font-weight: 700; color: var(--gold); text-shadow: 0 0 30px var(--gold); margin-bottom: 15px; }
+        .settings { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.8); padding: 10px 15px; border-radius: 30px; border: 1px solid #444; z-index: 1000; display: flex; align-items: center; gap: 10px; }
+        .info-btn { position: absolute; top: 20px; left: 20px; width: 50px; height: 50px; border-radius: 50%; border: 3px solid var(--gold); background: rgba(0,0,0,0.6); color: var(--gold); font-size: 30px; cursor: pointer; font-weight: bold; z-index: 1000; display: flex; align-items: center; justify-content: center; }
+
+        /* Wheel */
+        .wheel-box { position: relative; width: 560px; height: 560px; }
+        .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-top: 55px solid var(--primary); z-index: 500; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.8)); }
+        canvas { border-radius: 50%; background: #000; box-shadow: 0 0 100px rgba(0,0,0,1); }
+
+        /* Pangya Power Bar */
+        .pwr-wrap { width: 420px; height: 25px; background: #111; border: 4px solid #333; border-radius: 20px; margin-top: 25px; overflow: hidden; display: none; position: relative; }
+        .pwr-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #4cd137, #fbc531, #ed1c24); border-right: 4px solid #fff; }
+
+        /* Button */
+        .spin-btn { margin-top: 25px; padding: 22px 110px; font-size: 36px; font-weight: 700; background: linear-gradient(180deg, #ff4d4d 0%, #ed1c24 100%); color: white; border: none; border-radius: 80px; cursor: pointer; box-shadow: 0 10px 0 #991217, 0 20px 40px rgba(237,28,36,0.4); outline: none; touch-action: none; }
+        .spin-btn:active { transform: translateY(5px); box-shadow: 0 5px 0 #991217; }
+        .spin-btn:disabled { filter: grayscale(1); opacity: 0.4; cursor: not-allowed; }
+
+        /* Modals */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.97); z-index: 5000; align-items: center; justify-content: center; backdrop-filter: blur(15px); }
+        .modal-content { background: #111; border: 5px solid var(--gold); padding: 50px; border-radius: 60px; text-align: center; width: 450px; animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { from { transform: scale(0.6) opacity: 0; } to { transform: scale(1) opacity: 1; } }
+        .prize-label { font-size: 60px; font-weight: 700; color: var(--gold); margin: 20px 0; }
+        .sarcastic-desc { font-size: 20px; color: #888; font-style: italic; }
+        .close-btn { margin-top: 40px; padding: 18px 80px; background: var(--primary); color: white; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 22px; }
+    </style>
+</head>
+<body>
+
+    <div id="startOverlay" onclick="initGame()">
+        <h1>3PLUS ARCADE</h1>
+        <p>TAP TO UNLOCK AUDIO & START</p>
+    </div>
+
+    <button class="info-btn" onclick="toggleModal('infoModal', true)">!</button>
+
+    <div class="settings">
+        <span>🔊</span> <input type="range" id="vol" min="0" max="1" step="0.1" value="0.5" oninput="setVolume(this.value)">
+    </div>
+
+    <div class="hud">
+        <div class="pts-text"><span id="pts">1000</span> PTS</div>
+    </div>
+
+    <div class="wheel-box">
+        <div class="pointer"></div>
+        <canvas id="mainCanvas" width="560" height="560"></canvas>
+    </div>
+
+    <div class="pwr-wrap" id="pwrCont"><div class="pwr-fill" id="pwrBar"></div></div>
+    <button id="spinBtn" class="spin-btn">SPIN!</button>
+
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <h2 style="color:var(--gold); margin:0;">รางวัลและโอกาส</h2>
+            <div id="dropRateTable" style="margin-top:20px; text-align: left;"></div>
+            <button class="close-btn" style="background:#444" onclick="toggleModal('infoModal', false)">ปิด</button>
+        </div>
+    </div>
+
+    <div id="winModal" class="modal">
+        <div class="modal-content">
+            <h2 id="winStatus" style="font-size:36px;margin:0;">CONGRATS!</h2>
+            <span id="prizeIcon" style="font-size:120px;display:block;margin:25px 0;">💎</span>
+            <div id="prizeResult" class="prize-label">-</div>
+            <p id="funnyDesc" class="sarcastic-desc">คำบรรยายกวนๆ</p>
+            <button class="close-btn" onclick="toggleModal('winModal', false)">ตกลง</button>
+        </div>
+    </div>
+
+<script>
+    // --- [CONFIG & ASSETS] ---
+    const BGM = new Audio("Game of Fortune Carousel.mp3");
+    const tickSE = new Audio("https://www.soundjay.com/buttons/sounds/button-10.mp3");
+    const winSE = new Audio("https://www.soundjay.com/misc/sounds/bell-ringing-01.mp3");
+    const logoImg = new Image(); logoImg.src = "ch3plus-logo.svg";
+
+    let pts = 1000, isBusy = false, angle = 0;
+    let power = 0, powerDir = 1, pwrInterval = null;
+
+    // Fixed Mapping: Index 0-13 (14 Prizes)
+    const prizes = [
+        { label: "1000 Point", weight: 1,  color: '#ed1c24', icon: '💎', type: 'pts' },
+        { label: "500 Point",  weight: 2,  color: '#9b59b6', icon: '🔥', type: 'pts' },
+        { label: "200 Point",  weight: 5,  color: '#e67e22', icon: '💎', type: 'pts' },
+        { label: "150 Point",  weight: 7,  color: '#f0932b', icon: '🪙', type: 'pts' },
+        { label: "100 Point",  weight: 15, color: '#2ecc71', icon: '💰', type: 'pts' },
+        { label: "10 point",   weight: 20, color: '#f9ca24', icon: '🪙', type: 'pts' },
+        { label: "1 Point",    weight: 25, color: '#fbc531', icon: '🪙', type: 'pts' },
+        { label: "Ticket A",   weight: 3,  color: '#6c5ce7', icon: '🎫', type: 'tkt' },
+        { label: "Ticket B",   weight: 4,  color: '#fd79a8', icon: '🎟️', type: 'tkt' },
+        { label: "Ticket C",   weight: 5,  color: '#0984e3', icon: '🎟️', type: 'tkt' },
+        { label: "Ticket D",   weight: 6,  color: '#00b894', icon: '🎟️', type: 'tkt' },
+        { label: "Ticket E",   weight: 7,  color: '#e17055', icon: '🎟️', type: 'tkt' },
+        { label: "EMPTY",      weight: 35, color: '#636e72', icon: '💀', type: 'miss' },
+        { label: "EMPTY",      weight: 20, color: '#2d3436', icon: '🤡', type: 'miss' }
+    ];
+
+    const sarcasm = {
+        miss: ["เกลือเน้นๆ ว่ะน้อง!", "ยินดีด้วย คุณได้ความว่างเปล่า", "ดวงกุดจัด ไปทำบุญด่วน!", "โถ่... นึกว่าจะแน่!", "ดวงระดับ QA... เจอแต่เกลือ!"],
+        pts: ["จัดไปวัยรุ่น แต้มเข้าเป๋าแล้ว!", "รวยๆ เฮงๆ แต้มมาว่ะ!", "นิดๆ หน่อยๆ พอเป็นพิธี", "แม่เจ้าโว้ยยย แจ็คพอตแตกว่ะน้อง!"],
+        tkt: ["ได้ตั๋ว 3Plus ว่ะ สงสัยดวงจะมา", "ของแรร์นะเนี่ย เก็บไว้แลกของนะ", "ตั๋วทองฝังเพชร (มโนเอา)"]
+    };
+
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    const spinBtn = document.getElementById('spinBtn');
+
+    function initGame() {
+        document.getElementById('startOverlay').style.display = 'none';
+        BGM.loop = true; 
+        const savedVol = localStorage.getItem('spin_vol') || 0.5;
+        setVolume(savedVol);
+        BGM.play().catch(() => {});
+        renderLoop();
+    }
+
+    function renderLoop() { draw(); requestAnimationFrame(renderLoop); }
+
+    function draw() {
+        ctx.clearRect(0,0,560,560);
+        const slice = (Math.PI * 2) / prizes.length;
+
+        // Arcade LED Border
+        for(let i=0; i<40; i++) {
+            const a = (i * (Math.PI*2/40)) + (Date.now()/700);
+            const x = 280 + Math.cos(a) * 270;
+            const y = 280 + Math.sin(a) * 270;
+            ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2);
+            ctx.fillStyle = (Math.floor(Date.now()/200 + i)%2 == 0) ? '#fff' : '#444';
+            ctx.shadowBlur = 10; ctx.shadowColor = ctx.fillStyle; ctx.fill();
+        }
+        ctx.shadowBlur = 0;
+
+        prizes.forEach((p, i) => {
+            const start = angle + (i * slice);
+            
+            // Slice Gradient
+            const grad = ctx.createRadialGradient(280, 280, 50, 280, 280, 250);
+            grad.addColorStop(0.5, p.color);
+            grad.addColorStop(1, '#00000044');
+
+            ctx.beginPath(); ctx.fillStyle = grad; ctx.moveTo(280, 280); ctx.arc(280, 280, 250, start, start + slice); ctx.fill();
+            ctx.strokeStyle = '#fff2'; ctx.stroke();
+
+            // Nested Inner Layer
+            ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.moveTo(280, 280); ctx.arc(280, 280, 150, start, start + slice); ctx.fill();
+
+            ctx.save();
+            ctx.translate(280, 280); ctx.rotate(start + slice/2); ctx.textAlign = "right"; ctx.fillStyle = "white";
+            ctx.font = "bold 16px Kanit"; ctx.fillText(p.label, 235, -10);
+            ctx.font = "30px Arial"; ctx.fillText(p.icon, 205, 35);
+            if (p.type === 'tkt') { ctx.font = "bold 10px Kanit"; ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.fillText("3Plus", 170, 45); }
+            ctx.restore();
+        });
+
+        // Hub with Logo
+        ctx.beginPath(); ctx.arc(280, 280, 52, 0, Math.PI*2);
+        ctx.fillStyle = "#111"; ctx.fill();
+        ctx.strokeStyle = "#fbc531"; ctx.lineWidth = 6; ctx.stroke();
+        if (logoImg.complete) ctx.drawImage(logoImg, 280 - 25, 280 - 25, 50, 50);
+    }
+
+    // --- [PANGYA POWER LOGIC] ---
+    spinBtn.addEventListener('mousedown', startCharge);
+    spinBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startCharge(); });
+    window.addEventListener('mouseup', releaseCharge);
+    window.addEventListener('touchend', releaseCharge);
+
+    function startCharge() {
+        if(isBusy || pts < 100) return;
+        power = 0; powerDir = 1;
+        document.getElementById('pwrCont').style.display = 'block';
+        spinBtn.innerText = "CHARGING...";
+        pwrInterval = setInterval(() => {
+            power += (5 * powerDir);
+            if(power >= 100 || power <= 0) powerDir *= -1;
+            document.getElementById('pwrBar').style.width = power + "%";
+        }, 20);
+    }
+
+    function releaseCharge() {
+        if(!pwrInterval) return;
+        clearInterval(pwrInterval); pwrInterval = null;
+        document.getElementById('pwrCont').style.display = 'none';
+        startSpin(power);
+    }
+
+    function startSpin(impact) {
+        isBusy = true; pts -= 100; document.getElementById('pts').innerText = pts; spinBtn.disabled = true;
+        
+        // 1. สุ่ม Winner ก่อนหมุน (Weighted Random)
+        const totalW = prizes.reduce((s, p) => s + p.weight, 0);
+        let r = Math.random() * totalW, winIdx = 0;
+        for(let i=0; i<prizes.length; i++) {
+            if(r < prizes[i].weight) { winIdx = i; break; }
+            r -= prizes[i].weight;
+        }
+
+        // 2. คำนวณองศาหยุดแบบ NUCLEAR PRECISION (Absolute Sync)
+        const sliceSize = (Math.PI * 2) / prizes.length;
+        // Pointer อยู่ที่ 12 นาฬิกา (1.5 PI) ต้องดึงกึ่งกลางช่องรางวัลมาหยุดตรงนี้
+        const targetStop = (Math.PI * 1.5) - (winIdx * sliceSize) - (sliceSize / 2);
+        const rounds = (Math.PI * 2) * (15 + (impact/10));
+        const finalAngle = angle + rounds + (targetStop - (angle % (Math.PI * 2)));
+
+        const startTS = performance.now();
+        const duration = 5000 + (impact * 20);
+
+        function frame(now) {
+            const t = Math.min((now - startTS) / duration, 1);
+            const ease = 1 - Math.pow(1 - t, 4);
+            const prev = angle;
+            angle = angle + (finalAngle - angle) * (ease - (t > 0 ? (1 - Math.pow(1 - ((now-16-startTS)/duration), 4)) : 0));
+            
+            if(Math.floor(angle/sliceSize) != Math.floor(prev/sliceSize)) {
+                tickSE.currentTime = 0; tickSE.play().catch(()=>{});
+            }
+
+            if(t >= 1) {
+                angle = finalAngle % (Math.PI * 2);
+                finishSpin(prizes[winIdx]);
+            } else {
+                requestAnimationFrame(frame);
+            }
+        }
+        requestAnimationFrame(frame);
+    }
+
+    function finishSpin(p) {
+        if(p.type == 'pts') pts += parseInt(p.label);
+        document.getElementById('pts').innerText = pts;
+        document.getElementById('prizeIcon').innerText = p.icon;
+        document.getElementById('prizeResult').innerText = p.label;
+        const msgs = sarcasm[p.type] || ["จัดไปวัยรุ่น!"];
+        document.getElementById('funnyDesc').innerText = msgs[Math.floor(Math.random() * msgs.length)];
+
+        if(p.type == 'miss') {
+            document.getElementById('winStatus').innerText = "เสียใจด้วยนะจ๊ะ";
+            document.getElementById('winStatus').style.color = "#aaa";
+        } else {
+            document.getElementById('winStatus').innerText = "CONGRATS!";
+            document.getElementById('winStatus').style.color = "#fbc531";
+            winSE.play().catch(()=>{});
+        }
+        toggleModal('winModal', true);
+    }
+
+    function toggleModal(id, show) {
+        const m = document.getElementById(id); m.style.display = show ? 'flex' : 'none';
+        if(id === 'infoModal' && show) {
+            const total = prizes.reduce((s, p) => s + p.weight, 0);
+            let h = `<table style="width:100%; border-collapse:collapse;">`;
+            prizes.forEach(p => h += `<tr style="border-bottom:1px solid #333;"><td style="padding:8px;">${p.icon} ${p.label}</td><td style="text-align:right;">${((p.weight/total)*100).toFixed(1)}%</td></tr>`);
+            document.getElementById('dropRateTable').innerHTML = h + "</table>";
+        }
+        if(!show && id === 'winModal') { isBusy = false; spinBtn.disabled = false; spinBtn.innerText = "SPIN!"; }
+    }
+
+    function setVolume(v) { BGM.volume = v; tickSE.volume = v; winSE.volume = v; document.getElementById('vol').value = v; localStorage.setItem('spin_vol', v); }
+</script>
+</body>
+</html>
