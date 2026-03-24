@@ -2,62 +2,70 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3plus Fortune - Absolute Sync V19</title>
+    <title>3plus Fortune - Ultimate V11 History Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #ed1c24; --gold: #fbc531; --bg: #050505; }
         body { background: var(--bg); color: white; font-family: 'Kanit', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; user-select: none; }
-
-        /* Start Overlay */
+        
         #startOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; text-align: center; }
-        #startOverlay h1 { font-size: 60px; color: var(--gold); text-shadow: 0 0 30px var(--gold); margin: 0; }
-        #startOverlay p { font-size: 24px; color: #fff; margin-top: 20px; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
+        #startOverlay h1 { font-size: 60px; color: var(--gold); text-shadow: 0 0 30px var(--gold); margin-bottom: 5px; }
+        #startOverlay p { font-size: 24px; color: #fff; animation: blink 1.2s infinite; }
+        @keyframes blink { 50% { opacity: 0.3; } }
 
-        /* HUD */
-        .pts-text { font-size: 48px; font-weight: 700; color: var(--gold); text-shadow: 0 0 30px var(--gold); margin-bottom: 15px; }
-        .settings { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.8); padding: 10px 15px; border-radius: 30px; border: 1px solid #444; z-index: 1000; display: flex; align-items: center; gap: 10px; }
-        .info-btn { position: absolute; top: 20px; left: 20px; width: 50px; height: 50px; border-radius: 50%; border: 3px solid var(--gold); background: rgba(0,0,0,0.6); color: var(--gold); font-size: 30px; cursor: pointer; font-weight: bold; z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        /* Left Side HUD */
+        .left-controls { position: absolute; top: 20px; left: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 1000; }
+        .circle-btn { width: 50px; height: 50px; border-radius: 50%; border: 3px solid var(--gold); background: rgba(0,0,0,0.7); color: var(--gold); font-size: 24px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .circle-btn:hover { background: var(--gold); color: #000; }
 
-        /* Wheel */
+        .settings-panel { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.85); padding: 15px; border-radius: 20px; border: 1px solid #444; z-index: 1000; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+        .vol-row { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+        
+        .pts-text { font-size: 48px; font-weight: 700; color: var(--gold); text-shadow: 0 0 30px var(--gold); margin-bottom: 5px; text-align: center; }
+        .cost-info { font-size: 14px; color: #888; margin-bottom: 15px; text-align: center; }
+
         .wheel-box { position: relative; width: 560px; height: 560px; }
         .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-top: 55px solid var(--primary); z-index: 500; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.8)); }
-        canvas { border-radius: 50%; background: #000; box-shadow: 0 0 100px rgba(0,0,0,1); }
+        canvas { border-radius: 50%; background: #000; }
 
-        /* Pangya Power Bar */
-        .pwr-wrap { width: 420px; height: 25px; background: #111; border: 4px solid #333; border-radius: 20px; margin-top: 25px; overflow: hidden; display: none; position: relative; }
-        .pwr-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #4cd137, #fbc531, #ed1c24); border-right: 4px solid #fff; }
+        .pwr-wrap { width: 400px; height: 20px; background: #111; border: 2px solid #333; border-radius: 20px; margin-top: 20px; overflow: hidden; display: none; }
+        .pwr-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #4cd137, #fbc531, #ed1c24); }
 
-        /* Button */
-        .spin-btn { margin-top: 25px; padding: 22px 110px; font-size: 36px; font-weight: 700; background: linear-gradient(180deg, #ff4d4d 0%, #ed1c24 100%); color: white; border: none; border-radius: 80px; cursor: pointer; box-shadow: 0 10px 0 #991217, 0 20px 40px rgba(237,28,36,0.4); outline: none; touch-action: none; }
-        .spin-btn:active { transform: translateY(5px); box-shadow: 0 5px 0 #991217; }
-        .spin-btn:disabled { filter: grayscale(1); opacity: 0.4; cursor: not-allowed; }
+        .spin-btn { margin-top: 25px; width: 320px; padding: 18px 0; font-size: 30px; font-weight: 700; background: linear-gradient(180deg, #ff4d4d 0%, #ed1c24 100%); color: white; border: none; border-radius: 80px; cursor: pointer; box-shadow: 0 10px 0 #991217; outline: none; }
+        .spin-btn:active:not(:disabled) { transform: translateY(5px); box-shadow: 0 5px 0 #991217; }
+        .spin-btn:disabled { filter: grayscale(1); opacity: 0.5; cursor: not-allowed; }
 
         /* Modals */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.97); z-index: 5000; align-items: center; justify-content: center; backdrop-filter: blur(15px); }
-        .modal-content { background: #111; border: 5px solid var(--gold); padding: 50px; border-radius: 60px; text-align: center; width: 450px; animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes pop { from { transform: scale(0.6) opacity: 0; } to { transform: scale(1) opacity: 1; } }
-        .prize-label { font-size: 60px; font-weight: 700; color: var(--gold); margin: 20px 0; }
-        .sarcastic-desc { font-size: 20px; color: #888; font-style: italic; }
-        .close-btn { margin-top: 40px; padding: 18px 80px; background: var(--primary); color: white; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 22px; }
+        .modal-content { background: #111; border: 4px solid var(--gold); padding: 40px; border-radius: 40px; text-align: center; width: 420px; max-height: 80vh; overflow-y: auto; }
+        .prize-label { font-size: 55px; font-weight: 700; color: var(--gold); margin: 15px 0; }
+        .close-btn { margin-top: 25px; padding: 12px 60px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 20px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th, td { padding: 10px; border-bottom: 1px solid #333; text-align: left; }
+        .history-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #222; font-size: 16px; }
     </style>
 </head>
 <body>
 
     <div id="startOverlay" onclick="initGame()">
         <h1>3PLUS ARCADE</h1>
-        <p>TAP TO UNLOCK AUDIO & START</p>
+        <p>TAP TO START</p>
     </div>
 
-    <button class="info-btn" onclick="toggleModal('infoModal', true)">!</button>
+    <div class="left-controls">
+        <button class="circle-btn" onclick="toggleModal('infoModal', true)">!</button>
+        <button class="circle-btn" onclick="toggleModal('historyModal', true)">💼</button>
+    </div>
 
-    <div class="settings">
-        <span>🔊</span> <input type="range" id="vol" min="0" max="1" step="0.1" value="0.5" oninput="setVolume(this.value)">
+    <div class="settings-panel">
+        <div class="vol-row"><span>🎵 BGM</span> <input type="range" id="bgmVol" min="0" max="1" step="0.1" value="0.5" oninput="updateVol()"></div>
+        <div class="vol-row"><span>🔊 SFX</span> <input type="range" id="sfxVol" min="0" max="2" step="0.1" value="1.0" oninput="updateVol()"></div>
     </div>
 
     <div class="hud">
         <div class="pts-text"><span id="pts">1000</span> PTS</div>
+        <div class="cost-info">1 SPIN = 100 PTS</div>
     </div>
 
     <div class="wheel-box">
@@ -65,134 +73,133 @@
         <canvas id="mainCanvas" width="560" height="560"></canvas>
     </div>
 
-    <div class="pwr-wrap" id="pwrCont"><div class="pwr-fill" id="pwrBar"></div></div>
+    <div id="pwrCont" class="pwr-wrap"><div id="pwrBar" class="pwr-fill"></div></div>
     <button id="spinBtn" class="spin-btn">SPIN!</button>
 
     <div id="infoModal" class="modal">
         <div class="modal-content">
-            <h2 style="color:var(--gold); margin:0;">รางวัลและโอกาส</h2>
-            <div id="dropRateTable" style="margin-top:20px; text-align: left;"></div>
+            <h2 style="color:var(--gold); margin:0;">อัตราการออกรางวัล</h2>
+            <div id="dropRateTable"></div>
             <button class="close-btn" style="background:#444" onclick="toggleModal('infoModal', false)">ปิด</button>
+        </div>
+    </div>
+
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <h2 style="color:var(--gold); margin:0;">ประวัติการสุ่มล่าสุด</h2>
+            <div id="historyList" style="margin-top:20px;">
+                <p style="color:#666;">ยังไม่มีประวัติการสุ่ม</p>
+            </div>
+            <button class="close-btn" style="background:#444" onclick="toggleModal('historyModal', false)">ปิด</button>
         </div>
     </div>
 
     <div id="winModal" class="modal">
         <div class="modal-content">
-            <h2 id="winStatus" style="font-size:36px;margin:0;">CONGRATS!</h2>
-            <span id="prizeIcon" style="font-size:120px;display:block;margin:25px 0;">💎</span>
+            <h2 id="winStatus" style="font-size:32px;margin:0;">CONGRATS!</h2>
+            <span id="prizeIcon" style="font-size:100px;display:block;margin:20px 0;">💎</span>
             <div id="prizeResult" class="prize-label">-</div>
-            <p id="funnyDesc" class="sarcastic-desc">คำบรรยายกวนๆ</p>
-            <button class="close-btn" onclick="toggleModal('winModal', false)">ตกลง</button>
+            <p id="funnyDesc" style="color:#aaa; font-style:italic;"></p>
+            <button class="close-btn" onclick="closeWinModal()">ตกลง</button>
         </div>
     </div>
 
 <script>
-    // --- [CONFIG & ASSETS] ---
-    const BGM = new Audio("Game of Fortune Carousel.mp3");
-    const tickSE = new Audio("https://www.soundjay.com/buttons/sounds/button-10.mp3");
+    // --- [CONFIG] ---
+    const SPIN_COST = 100;
+    const BGM = new Audio("Game of Fortune Carousel.mp3"); BGM.loop = true;
     const winSE = new Audio("https://www.soundjay.com/misc/sounds/bell-ringing-01.mp3");
     const logoImg = new Image(); logoImg.src = "ch3plus-logo.svg";
 
-    let pts = 1000, isBusy = false, angle = 0;
-    let power = 0, powerDir = 1, pwrInterval = null;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const bgmGain = audioCtx.createGain();
+    const sfxGain = audioCtx.createGain();
+    bgmGain.connect(audioCtx.destination); sfxGain.connect(audioCtx.destination);
+    const bgmSrc = audioCtx.createMediaElementSource(BGM); bgmSrc.connect(bgmGain);
+    const winSrc = audioCtx.createMediaElementSource(winSE); winSrc.connect(sfxGain);
 
-    // Fixed Mapping: Index 0-13 (14 Prizes)
     const prizes = [
-        { label: "1000 Point", weight: 1,  color: '#ed1c24', icon: '💎', type: 'pts' },
-        { label: "500 Point",  weight: 2,  color: '#9b59b6', icon: '🔥', type: 'pts' },
-        { label: "200 Point",  weight: 5,  color: '#e67e22', icon: '💎', type: 'pts' },
-        { label: "150 Point",  weight: 7,  color: '#f0932b', icon: '🪙', type: 'pts' },
-        { label: "100 Point",  weight: 15, color: '#2ecc71', icon: '💰', type: 'pts' },
-        { label: "10 point",   weight: 20, color: '#f9ca24', icon: '🪙', type: 'pts' },
-        { label: "1 Point",    weight: 25, color: '#fbc531', icon: '🪙', type: 'pts' },
-        { label: "Ticket A",   weight: 3,  color: '#6c5ce7', icon: '🎫', type: 'tkt' },
-        { label: "Ticket B",   weight: 4,  color: '#fd79a8', icon: '🎟️', type: 'tkt' },
-        { label: "Ticket C",   weight: 5,  color: '#0984e3', icon: '🎟️', type: 'tkt' },
-        { label: "Ticket D",   weight: 6,  color: '#00b894', icon: '🎟️', type: 'tkt' },
-        { label: "Ticket E",   weight: 7,  color: '#e17055', icon: '🎟️', type: 'tkt' },
+        { label: "1000 Point", weight: 1,  color: '#ed1c24', icon: '💎', type: 'pts' }, 
+        { label: "500 Point",  weight: 2,  color: '#9b59b6', icon: '🔥', type: 'pts' }, 
+        { label: "200 Point",  weight: 5,  color: '#e67e22', icon: '💎', type: 'pts' }, 
+        { label: "150 Point",  weight: 7,  color: '#f0932b', icon: '🪙', type: 'pts' }, 
+        { label: "100 Point",  weight: 15, color: '#2ecc71', icon: '💰', type: 'pts' }, 
+        { label: "10 point",   weight: 20, color: '#f9ca24', icon: '🪙', type: 'pts' }, 
+        { label: "1 Point",    weight: 25, color: '#fbc531', icon: '🪙', type: 'pts' }, 
+        { label: "Ticket A",   weight: 3,  color: '#6c5ce7', icon: '🎫', type: 'tkt' }, 
+        { label: "Ticket B",   weight: 4,  color: '#fd79a8', icon: '🎟️', type: 'tkt' }, 
+        { label: "Ticket C",   weight: 5,  color: '#0984e3', icon: '🎟️', type: 'tkt' }, 
+        { label: "Ticket D",   weight: 6,  color: '#00b894', icon: '🎟️', type: 'tkt' }, 
+        { label: "Ticket E",   weight: 7,  color: '#e17055', icon: '🎟️', type: 'tkt' }, 
         { label: "EMPTY",      weight: 35, color: '#636e72', icon: '💀', type: 'miss' },
-        { label: "EMPTY",      weight: 20, color: '#2d3436', icon: '🤡', type: 'miss' }
+        { label: "EMPTY",      weight: 20, color: '#2d3436', icon: '🤡', type: 'miss' } 
     ];
 
     const sarcasm = {
-        miss: ["เกลือเน้นๆ ว่ะน้อง!", "ยินดีด้วย คุณได้ความว่างเปล่า", "ดวงกุดจัด ไปทำบุญด่วน!", "โถ่... นึกว่าจะแน่!", "ดวงระดับ QA... เจอแต่เกลือ!"],
-        pts: ["จัดไปวัยรุ่น แต้มเข้าเป๋าแล้ว!", "รวยๆ เฮงๆ แต้มมาว่ะ!", "นิดๆ หน่อยๆ พอเป็นพิธี", "แม่เจ้าโว้ยยย แจ็คพอตแตกว่ะน้อง!"],
-        tkt: ["ได้ตั๋ว 3Plus ว่ะ สงสัยดวงจะมา", "ของแรร์นะเนี่ย เก็บไว้แลกของนะ", "ตั๋วทองฝังเพชร (มโนเอา)"]
+        miss: ["เกลือเน้นๆ ว่ะน้อง!", "ของดี...พี่เก็บไว้เองเถอะ!!", "ดวงกุดจัด ไปทำบุญด่วน!", "โถ่... นึกว่าจะแน่!"],
+        pts: ["จัดไปวัยรุ่น เบี้ยยังชีพเข้าเป๋าแล้ว!", "รวยๆ เฮงๆ แต้มมาว่ะ!", "นิดๆ หน่อยๆ พอเป็นพิธี"],
+        tkt: ["ได้ตั๋ว 3Plus สงสัยดวงจะมา", "ของแรร์นะเนี่ย เก็บไว้แลกของนะ"]
     };
 
+    let pts = 1000, isBusy = false, angle = 0, power = 0, powerDir = 1, pwrInterval = null;
+    let flashMode = "normal", spinHistory = [];
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
     const spinBtn = document.getElementById('spinBtn');
 
     function initGame() {
         document.getElementById('startOverlay').style.display = 'none';
-        BGM.loop = true; 
-        const savedVol = localStorage.getItem('spin_vol') || 0.5;
-        setVolume(savedVol);
-        BGM.play().catch(() => {});
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const bVol = localStorage.getItem('bgm_vol') || 0.5;
+        const sVol = localStorage.getItem('sfx_vol') || 1.0;
+        document.getElementById('bgmVol').value = bVol; document.getElementById('sfxVol').value = sVol;
+        updateVol();
+        BGM.play().catch(()=>{});
+        updateBtnState();
         renderLoop();
     }
 
-    function renderLoop() { draw(); requestAnimationFrame(renderLoop); }
-
-    function draw() {
+    function renderLoop() {
         ctx.clearRect(0,0,560,560);
         const slice = (Math.PI * 2) / prizes.length;
 
-        // Arcade LED Border
+        // Arcade Border LEDs
         for(let i=0; i<40; i++) {
-            const a = (i * (Math.PI*2/40)) + (Date.now()/700);
-            const x = 280 + Math.cos(a) * 270;
-            const y = 280 + Math.sin(a) * 270;
-            ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2);
-            ctx.fillStyle = (Math.floor(Date.now()/200 + i)%2 == 0) ? '#fff' : '#444';
-            ctx.shadowBlur = 10; ctx.shadowColor = ctx.fillStyle; ctx.fill();
+            let color = '#444'; const a = (i * (Math.PI*2/40)) + (Date.now()/700);
+            if (flashMode === "win") color = (Math.floor(Date.now()/50 + i)%2 == 0) ? '#fbc531' : '#fff';
+            else if (flashMode === "lose") color = (Math.floor(Date.now()/300 + i)%2 == 0) ? '#ed1c24' : '#222';
+            else color = (Math.floor(Date.now()/200 + i)%2 == 0) ? '#fff' : '#444';
+            ctx.beginPath(); ctx.arc(280 + Math.cos(a)*272, 280 + Math.sin(a)*272, 5, 0, Math.PI*2);
+            ctx.fillStyle = color; ctx.fill();
         }
-        ctx.shadowBlur = 0;
 
+        // Wheel
         prizes.forEach((p, i) => {
-            const start = angle + (i * slice);
-            
-            // Slice Gradient
-            const grad = ctx.createRadialGradient(280, 280, 50, 280, 280, 250);
-            grad.addColorStop(0.5, p.color);
-            grad.addColorStop(1, '#00000044');
-
-            ctx.beginPath(); ctx.fillStyle = grad; ctx.moveTo(280, 280); ctx.arc(280, 280, 250, start, start + slice); ctx.fill();
+            const start = angle + (i * slice) + (Math.PI * 1.5);
+            ctx.beginPath(); ctx.fillStyle = p.color; ctx.moveTo(280, 280); ctx.arc(280, 280, 250, start, start + slice); ctx.fill();
             ctx.strokeStyle = '#fff2'; ctx.stroke();
-
-            // Nested Inner Layer
-            ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.moveTo(280, 280); ctx.arc(280, 280, 150, start, start + slice); ctx.fill();
-
-            ctx.save();
-            ctx.translate(280, 280); ctx.rotate(start + slice/2); ctx.textAlign = "right"; ctx.fillStyle = "white";
-            ctx.font = "bold 16px Kanit"; ctx.fillText(p.label, 235, -10);
-            ctx.font = "30px Arial"; ctx.fillText(p.icon, 205, 35);
-            if (p.type === 'tkt') { ctx.font = "bold 10px Kanit"; ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.fillText("3Plus", 170, 45); }
-            ctx.restore();
+            ctx.save(); ctx.translate(280, 280); ctx.rotate(start + slice/2); ctx.textAlign = "right"; ctx.fillStyle = "white";
+            ctx.font = "bold 14px Kanit"; ctx.fillText(p.label, 235, -8);
+            ctx.font = "24px Arial"; ctx.fillText(p.icon, 205, 28); ctx.restore();
         });
 
-        // Hub with Logo
-        ctx.beginPath(); ctx.arc(280, 280, 52, 0, Math.PI*2);
-        ctx.fillStyle = "#111"; ctx.fill();
-        ctx.strokeStyle = "#fbc531"; ctx.lineWidth = 6; ctx.stroke();
-        if (logoImg.complete) ctx.drawImage(logoImg, 280 - 25, 280 - 25, 50, 50);
+        // Hub + Logo Recovery
+        ctx.beginPath(); ctx.arc(280, 280, 52, 0, Math.PI*2); ctx.fillStyle = "#111"; ctx.fill();
+        ctx.strokeStyle = "#fbc531"; ctx.lineWidth = 4; ctx.stroke();
+        if(logoImg.complete) ctx.drawImage(logoImg, 240, 240, 80, 80);
+
+        requestAnimationFrame(renderLoop);
     }
 
-    // --- [PANGYA POWER LOGIC] ---
     spinBtn.addEventListener('mousedown', startCharge);
-    spinBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startCharge(); });
     window.addEventListener('mouseup', releaseCharge);
-    window.addEventListener('touchend', releaseCharge);
 
     function startCharge() {
-        if(isBusy || pts < 100) return;
-        power = 0; powerDir = 1;
+        if(isBusy || pts < SPIN_COST) return;
+        flashMode = "normal"; power = 0; powerDir = 1;
         document.getElementById('pwrCont').style.display = 'block';
-        spinBtn.innerText = "CHARGING...";
         pwrInterval = setInterval(() => {
-            power += (5 * powerDir);
-            if(power >= 100 || power <= 0) powerDir *= -1;
+            power += 5 * powerDir; if(power >= 100 || power <= 0) powerDir *= -1;
             document.getElementById('pwrBar').style.width = power + "%";
         }, 20);
     }
@@ -201,13 +208,14 @@
         if(!pwrInterval) return;
         clearInterval(pwrInterval); pwrInterval = null;
         document.getElementById('pwrCont').style.display = 'none';
-        startSpin(power);
+        executeSpin(power);
     }
 
-    function startSpin(impact) {
-        isBusy = true; pts -= 100; document.getElementById('pts').innerText = pts; spinBtn.disabled = true;
-        
-        // 1. สุ่ม Winner ก่อนหมุน (Weighted Random)
+    function executeSpin(impact) {
+        if(isBusy || pts < SPIN_COST) return;
+        isBusy = true; pts -= SPIN_COST; document.getElementById('pts').innerText = pts; 
+        spinBtn.disabled = true;
+
         const totalW = prizes.reduce((s, p) => s + p.weight, 0);
         let r = Math.random() * totalW, winIdx = 0;
         for(let i=0; i<prizes.length; i++) {
@@ -215,67 +223,90 @@
             r -= prizes[i].weight;
         }
 
-        // 2. คำนวณองศาหยุดแบบ NUCLEAR PRECISION (Absolute Sync)
-        const sliceSize = (Math.PI * 2) / prizes.length;
-        // Pointer อยู่ที่ 12 นาฬิกา (1.5 PI) ต้องดึงกึ่งกลางช่องรางวัลมาหยุดตรงนี้
-        const targetStop = (Math.PI * 1.5) - (winIdx * sliceSize) - (sliceSize / 2);
-        const rounds = (Math.PI * 2) * (15 + (impact/10));
-        const finalAngle = angle + rounds + (targetStop - (angle % (Math.PI * 2)));
+        const slice = (Math.PI * 2) / prizes.length;
+        const currentAngleNorm = angle % (Math.PI * 2);
+        let targetStop = (Math.PI * 2) - (winIdx * slice) - (slice / 2);
+        let dist = targetStop - currentAngleNorm;
+        while (dist <= 0) dist += (Math.PI * 2);
 
-        const startTS = performance.now();
-        const duration = 5000 + (impact * 20);
+        const totalDist = ((12 + Math.floor(impact/8)) * (Math.PI * 2)) + dist + ((Math.random()-0.5)*(slice*0.7));
+        const startAngle = angle, startTime = performance.now(), duration = 4500 + (impact * 20);
 
-        function frame(now) {
-            const t = Math.min((now - startTS) / duration, 1);
-            const ease = 1 - Math.pow(1 - t, 4);
-            const prev = angle;
-            angle = angle + (finalAngle - angle) * (ease - (t > 0 ? (1 - Math.pow(1 - ((now-16-startTS)/duration), 4)) : 0));
-            
-            if(Math.floor(angle/sliceSize) != Math.floor(prev/sliceSize)) {
-                tickSE.currentTime = 0; tickSE.play().catch(()=>{});
-            }
-
-            if(t >= 1) {
-                angle = finalAngle % (Math.PI * 2);
-                finishSpin(prizes[winIdx]);
-            } else {
-                requestAnimationFrame(frame);
+        function animate(now) {
+            const t = Math.min((now - startTime) / duration, 1);
+            const ease = 1 - Math.pow(1 - t, 5);
+            const lastAngle = angle;
+            angle = startAngle + (totalDist * ease);
+            if (Math.floor((angle + slice/2) / slice) !== Math.floor((lastAngle + slice/2) / slice)) playTick();
+            if (t < 1) requestAnimationFrame(animate);
+            else {
+                angle = angle % (Math.PI * 2);
+                isBusy = false;
+                flashMode = (prizes[winIdx].type === 'miss') ? "lose" : "win";
+                saveHistory(prizes[winIdx]);
+                setTimeout(() => showResult(prizes[winIdx]), 300);
             }
         }
-        requestAnimationFrame(frame);
+        requestAnimationFrame(animate);
     }
 
-    function finishSpin(p) {
+    function saveHistory(p) {
+        spinHistory.unshift({ ...p, time: new Date().toLocaleTimeString() });
+        if(spinHistory.length > 5) spinHistory.pop();
+    }
+
+    function showResult(p) {
         if(p.type == 'pts') pts += parseInt(p.label);
         document.getElementById('pts').innerText = pts;
         document.getElementById('prizeIcon').innerText = p.icon;
         document.getElementById('prizeResult').innerText = p.label;
-        const msgs = sarcasm[p.type] || ["จัดไปวัยรุ่น!"];
+        const msgs = sarcasm[p.type] || ["ยินดีด้วย!"];
         document.getElementById('funnyDesc').innerText = msgs[Math.floor(Math.random() * msgs.length)];
-
-        if(p.type == 'miss') {
-            document.getElementById('winStatus').innerText = "เสียใจด้วยนะจ๊ะ";
-            document.getElementById('winStatus').style.color = "#aaa";
-        } else {
-            document.getElementById('winStatus').innerText = "CONGRATS!";
-            document.getElementById('winStatus').style.color = "#fbc531";
-            winSE.play().catch(()=>{});
-        }
-        toggleModal('winModal', true);
+        if(p.type !== 'miss') winSE.play().catch(()=>{});
+        document.getElementById('winStatus').innerText = p.type != 'miss' ? "CONGRATS!" : "เสียใจด้วยนะจ๊ะ";
+        document.getElementById('winModal').style.display = 'flex';
     }
 
     function toggleModal(id, show) {
-        const m = document.getElementById(id); m.style.display = show ? 'flex' : 'none';
-        if(id === 'infoModal' && show) {
+        document.getElementById(id).style.display = show ? 'flex' : 'none';
+        if(show && id === 'infoModal') {
             const total = prizes.reduce((s, p) => s + p.weight, 0);
-            let h = `<table style="width:100%; border-collapse:collapse;">`;
-            prizes.forEach(p => h += `<tr style="border-bottom:1px solid #333;"><td style="padding:8px;">${p.icon} ${p.label}</td><td style="text-align:right;">${((p.weight/total)*100).toFixed(1)}%</td></tr>`);
-            document.getElementById('dropRateTable').innerHTML = h + "</table>";
+            let h = `<table><tr><th>รางวัล</th><th style="text-align:right;">โอกาส</th></tr>`;
+            prizes.forEach(p => h += `<tr><td>${p.icon} ${p.label}</td><td style="text-align:right;">${((p.weight/total)*100).toFixed(1)}%</td></tr>`);
+            document.getElementById('dropRateTable').innerHTML = h + `</table>`;
         }
-        if(!show && id === 'winModal') { isBusy = false; spinBtn.disabled = false; spinBtn.innerText = "SPIN!"; }
+        if(show && id === 'historyModal') {
+            let h = spinHistory.map(i => `<div class="history-item"><span>${i.time}</span> <span>${i.icon} ${i.label}</span></div>`).join('');
+            document.getElementById('historyList').innerHTML = h || `<p style="color:#666;">ยังไม่มีประวัติการสุ่ม</p>`;
+        }
     }
 
-    function setVolume(v) { BGM.volume = v; tickSE.volume = v; winSE.volume = v; document.getElementById('vol').value = v; localStorage.setItem('spin_vol', v); }
+    function updateBtnState() {
+        if (pts < SPIN_COST) { spinBtn.innerText = "NOT ENOUGH PTS"; spinBtn.disabled = true; }
+        else { spinBtn.innerText = "SPIN!"; spinBtn.disabled = false; }
+    }
+
+    function closeWinModal() { 
+        document.getElementById('winModal').style.display = 'none'; 
+        flashMode = "normal"; updateBtnState();
+    }
+
+    function playTick() {
+        if (audioCtx.state === 'suspended') return;
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(900, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
+        osc.connect(gain); gain.connect(sfxGain);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+    }
+
+    function updateVol() {
+        bgmGain.gain.value = document.getElementById('bgmVol').value;
+        sfxGain.gain.value = document.getElementById('sfxVol').value;
+        localStorage.setItem('bgm_vol', bgmGain.gain.value);
+        localStorage.setItem('sfx_vol', sfxGain.gain.value);
+    }
 </script>
 </body>
 </html>
